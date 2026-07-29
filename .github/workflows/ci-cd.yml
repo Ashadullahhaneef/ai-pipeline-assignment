@@ -1,0 +1,51 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run lint
+        run: |
+          pip install flake8
+          flake8 . --max-line-length=100
+
+      - name: Run tests
+        run: |
+          pip install pytest
+          pytest tests/
+
+  # only deploys after tests pass, and only on main
+  deploy-staging:
+    needs: test-and-lint
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        env:
+          STAGING_API_KEY: ${{ secrets.STAGING_API_KEY }}
+          STAGING_SERVER_URL: ${{ secrets.STAGING_SERVER_URL }}
+        run: |
+          echo "deploying to staging..."
+          # actual deploy command would go here, e.g.
+          # curl -X POST $STAGING_SERVER_URL/deploy -H "Authorization: Bearer $STAGING_API_KEY"
+          echo "done"
