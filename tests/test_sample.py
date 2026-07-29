@@ -3,6 +3,7 @@ Sample test file for CI pipeline demo.
 Real project mein yahan actual pipeline ke functions test honge.
 """
 
+
 def add(a, b):
     return a + b
 
