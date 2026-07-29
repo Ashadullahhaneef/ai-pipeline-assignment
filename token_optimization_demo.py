@@ -4,6 +4,12 @@ Part 1 - Token/Cost Optimization
 Problem: agent pipeline was using ~100K tokens per query, too expensive.
 Implemented 2 fixes: RAG (send only relevant chunk) and history summarization.
 
+Note: using a simple char/4 approximation for tokens since tiktoken needs
+internet access to download its encoding file, which wasn't available here.
+On a normal machine you'd just do:
+    import tiktoken
+    encoding = tiktoken.get_encoding("cl100k_base")
+    len(encoding.encode(text))
 """
 
 
@@ -59,9 +65,15 @@ def simulate_long_history():
     # pretend this is a long back and forth conversation
     messages = [
         {"role": "user", "content": "Hi, I want to know about my leaves"},
-        {"role": "assistant", "content": "Sure, I can help with that. Are you full-time or part-time?"},
+        {
+            "role": "assistant",
+            "content": "Sure, I can help with that. Are you full-time or part-time?",
+        },
         {"role": "user", "content": "I'm full-time"},
-        {"role": "assistant", "content": "Great, full-time employees get different leave categories..."},
+        {
+            "role": "assistant",
+            "content": "Great, full-time employees get different leave categories...",
+        },
         {"role": "user", "content": "What about sick leave separately?"},
         {"role": "assistant", "content": "Sick leave is tracked separately from paid leave..."},
     ] * 5
@@ -77,7 +89,10 @@ def summarized_history(messages, query):
     # in production this summary would come from an actual LLM call
     # (something like "summarize this conversation in 1-2 lines"), hardcoding
     # it here since I don't have API access set up in this environment
-    summary = "User is a full-time employee asking about leave policy, specifically paid and sick leave."
+    summary = (
+        "User is a full-time employee asking about leave policy, "
+        "specifically paid and sick leave."
+    )
     return f"CONVERSATION SUMMARY:\n{summary}\n\nNEW QUESTION: {query}"
 
 
